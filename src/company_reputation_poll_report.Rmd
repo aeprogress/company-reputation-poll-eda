@@ -1,0 +1,17 @@
+---
+title: "Untitled"
+author: "Object of Type Closure is not Subsettable Group"
+date: '2022-06-19'
+output: html_document
+
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_dir = "../"
+    )
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
