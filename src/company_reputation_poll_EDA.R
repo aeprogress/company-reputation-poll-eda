@@ -6,6 +6,11 @@ library(GGally)
 library(ggbump)
 library(arules)
 
+
+#################################################
+#                 Data Prep.                    #
+#################################################
+
 # Load dataset.
 tuesdata <- tidytuesdayR::tt_load('2022-05-31')
 tuesdata <- as_tibble(tuesdata)
@@ -32,30 +37,55 @@ reputation %>%
   distinct() %>% 
   na.omit() -> reputation
 
-# Sample both datasets.
-glimpse(poll)
-glimpse(reputation)
+# Initialize a seed for the jitter randomization.
+posn_j <- position_jitter(seed = 136)
 
-# View a summary of both datasets.
+#################################################
+#                   Poll EDA                    #
+#################################################
+
+# Sample poll datasets.
+glimpse(poll)
+
+# View a summary of poll datasets.
 skim(poll)
-skim(reputation)
 
 # Count the different industries.
 poll %>% 
   group_by(industry) %>% 
   count(industry)
 
-# Categorize ranks.
-poll$rank_cat <- arules::discretize(poll$rq, breaks = 7, 
-                                    labels = c("Excellent", "Excellent", 
+# Categorize RQ scores.
+poll$`rq_category` <- arules::discretize(poll$rq, breaks = 7, 
+                                    labels = c("Excellent", "Greate", 
                                                "Good", "Fair", "Poor", 
-                                               "Very Poor", "Critical"))
+                                               "Bad", "Critical"))
+
+# Plot distribution of companies' RQ Score categorize. 
+ggplot(poll, aes(`rq_category`)) +
+  geom_text(position = "stack", stat='count',aes(label=..count..), vjust = -0.5)+
+  geom_bar() +
+  labs(title = "Distribution of Companies' RQ Score Categorize", x = "RQ Score Category", y = "Companies Count") + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Categorize ranks.
+poll$`rank_category` <- arules::discretize(poll$rank, breaks = 7, 
+                                    labels = c("Excellent", "Greate", 
+                                               "Good", "Fair", "Poor", 
+                                               "Bad", "Critical"))
 
 # Plot distribution of companies' rank categorize. 
-ggplot(poll, aes(rank_cat)) +
-  geom_text(position = "stack", stat='count',aes(label=..count..), vjust = -0.5) +
+ggplot(poll, aes(`rank_category`)) +
+  geom_text(position = "stack", stat='count',aes(label=..count..), vjust = -0.5)+
   geom_bar() +
-  labs(title = "Distribution of Companies' Rank Categorize") + 
+  labs(title = "Distribution of Companies' Rank Categorize", x = "Rnak Category", y = "Companies Count") + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot distribution of RQ score for each industry, grouped by rank category.
+ggplot(poll, aes(rq, fill = industry)) +
+  geom_density(color = NA, alpha = 0.5) + 
+  facet_wrap(. ~ category, ncol = 2) +
+  labs(title = "Industryies' RQ Score Density", x = "RQ Score") +
   theme(plot.title = element_text(hjust = 0.5))
 
 # Plot industries rankings distributions grouped by year.
@@ -105,3 +135,95 @@ ggplot(poll, aes(industry, rank)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),) +
   labs(title = "Destipution of Industryies ranking") +
   theme(plot.title = element_text(hjust = 0.5))
+
+
+#################################################
+#              Reputation EDA                   #
+#################################################
+
+# Sample reputation datasets.
+glimpse(reputation)
+
+# View a summary of reputation datasets.
+skim(reputation)
+
+# Categorize ranks.
+reputation$`score_ctegory` <- arules::discretize(reputation$score, breaks = 7, 
+                                    labels = rev(c("Excellent", "Great", 
+                                               "Good", "Fair", "Poor",
+                                               "Bad", "Critical")))
+
+# Plot distribution of companies' score categorize. 
+ggplot(reputation, aes(`score_ctegory`)) +
+  geom_text(position = "stack", stat='count',aes(label=..count..), vjust = -0.5)+
+  geom_bar() +
+  labs(title = "Distribution of Companies' score Categorize", x = "Score Category", y = "Companies Count") + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Categorize scores.
+reputation$`rank_ctegory` <- arules::discretize(reputation$rank, breaks = 7, 
+                                                 labels = rev(c("Excellent", "Great", 
+                                                            "Good", "Fair", "Poor",
+                                                            "Bad", "Critical")))
+
+# Plot distribution of companies' rank category. 
+ggplot(reputation, aes(`rank_ctegory`)) +
+  geom_text(position = "stack", stat='count',aes(label=..count..), vjust = -0.5)+
+  geom_bar() +
+  labs(title = "Distribution of Companies' Rank Category", x = "Rnak Category", y = "Companies Count") + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot distribution of companies' rank category. 
+ggplot(reputation, aes(`rank_ctegory`)) +
+  geom_text(position = "stack", stat='count',aes(label=..count..), vjust = -0.5)+
+  geom_bar() +
+  labs(title = "Distribution of Companies' Rank Categorize", x = "Rnak Category", y = "Companies Count") + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot distribution of score for each industry, grouped by rank score_category.
+ggplot(reputation, aes(score, fill = industry)) +
+  geom_density(color = NA, alpha = 0.5) + 
+  facet_wrap(. ~ `score_ctegory`, ncol = 2) +
+  labs(title = "Industryies' Score Density", x = "Score") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot distribution of rank for each industry, grouped by rank rank_category.
+ggplot(reputation, aes(rank, fill = industry)) +
+  geom_density(color = NA, alpha = 0.5) + 
+  facet_wrap(. ~ , ncol = 2) +
+  labs(title = "Industryies' Score Density", x = "Rank") +
+  theme(plot.title = element_text(hjust = 0.5))
+  
+# Find companies' total score.
+reputation %>% 
+  group_by(company) %>% 
+  summarise(total_score = sum(score)) -> companyTotalScore
+
+# Categorize total scores.
+companyTotalScore$`category` <- arules::discretize(companyTotalScore$`total_score`, breaks = 7, 
+                                                labels = rev(c("Excellent", "Great", 
+                                                               "Good", "Fair", "Poor",
+                                                               "Bad", "Critical")))
+# Find top companies.
+companyTotalScore %>% 
+  filter(category == "Excellent") -> topCompanies
+
+reputation %>% 
+  filter(company %in% topCompanies$company) -> topScoreCompanies
+
+# Plot top companies score distribution.
+ggplot(topScoreCompanies, aes(company, score, color = company)) + 
+  geom_point(position = posn_j, shape = 16, alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  # facet_wrap(. ~ year, ncol = 3) +
+  labs(title = "Top Comanies Score Distribution") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot the density of top companies scores.
+ggplot(topScoreCompanies, aes(score, fill = company)) +
+  geom_density(color = NA, alpha = 0.4) +
+  labs(title = "Top Companies Scores Desity") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
