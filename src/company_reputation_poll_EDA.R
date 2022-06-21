@@ -97,24 +97,24 @@ ggplot(poll, aes(industry, rank, color = industry)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme(plot.title = element_text(hjust = 0.5))
 
-# Plot average RQ score for each industry from 2017-2022.
+# Plot average industry RQ score for each industry from 2017-2022.
 poll %>% 
   group_by(industry, year) %>%
   summarise(.groups = "keep", avg_rq = mean(rq)) %>% 
   ggplot(aes(year, `avg_rq`, color = industry)) + 
   geom_bump() +
   geom_point(size = 1) +
-  labs(title = "Average RQ Score from 2017-2022", y = "Average RQ Score") +
+  labs(title = "Average Industry RQ Score from 2017-2022", y = "Average RQ Score") +
   theme(plot.title = element_text(hjust = 0.5))
 
-# Plot average rank for each industry from 2017-2022.
+# Plot average industry rank for each industry from 2017-2022.
 poll %>% 
   group_by(industry, year) %>%
   summarise(.groups = "keep", avg_rank = mean(rank)) %>% 
   ggplot(aes(year, `avg_rank`, color = industry)) + 
   geom_bump() +
   geom_point(size = 1) +
-  labs(title = "Average Rank from 2017-2022", y = "Average Rank") +
+  labs(title = "Average Industry Rank from 2017-2022", y = "Average Rank") +
   theme(plot.title = element_text(hjust = 0.5))
 
 # Plot industries rankings form 2017-2022 grouped by industry.
