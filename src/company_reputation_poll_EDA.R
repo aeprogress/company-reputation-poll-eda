@@ -103,8 +103,8 @@ poll %>%
   summarise(.groups = "keep", avg_rq = mean(rq)) %>% 
   ggplot(aes(year, `avg_rq`, color = industry)) + 
   geom_bump() +
-  geom_point(size = 1)
-labs(title = "Average RQ Score from 2017-2022", y = "Average RQ Score") +
+  geom_point(size = 1) +
+  labs(title = "Average RQ Score from 2017-2022", y = "Average RQ Score") +
   theme(plot.title = element_text(hjust = 0.5))
 
 # Plot average rank for each industry from 2017-2022.
