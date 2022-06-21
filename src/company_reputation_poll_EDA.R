@@ -183,7 +183,7 @@ ggplot(reputation, aes(score, fill = industry)) +
 # Plot distribution of rank for each industry, grouped by rank rank_category.
 ggplot(reputation, aes(rank, fill = industry)) +
   geom_density(color = NA, alpha = 0.5) + 
-  facet_wrap(. ~ , ncol = 2) +
+  facet_wrap(. ~ `rank_ctegory`, ncol = 2) +
   labs(title = "Industryies' Score Density", x = "Rank") +
   theme(plot.title = element_text(hjust = 0.5))
   
