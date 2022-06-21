@@ -97,6 +97,26 @@ ggplot(poll, aes(industry, rank, color = industry)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme(plot.title = element_text(hjust = 0.5))
 
+# Plot average RQ score for each industry from 2017-2022.
+poll %>% 
+  group_by(industry, year) %>%
+  summarise(.groups = "keep", avg_rq = mean(rq)) %>% 
+  ggplot(aes(year, `avg_rq`, color = industry)) + 
+  geom_bump() +
+  geom_point(size = 1)
+labs(title = "Average RQ Score from 2017-2022", y = "Average RQ Score") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot average rank for each industry from 2017-2022.
+poll %>% 
+  group_by(industry, year) %>%
+  summarise(.groups = "keep", avg_rank = mean(rank)) %>% 
+  ggplot(aes(year, `avg_rank`, color = industry)) + 
+  geom_bump() +
+  geom_point(size = 1) +
+  labs(title = "Average Rank from 2017-2022", y = "Average Rank") +
+  theme(plot.title = element_text(hjust = 0.5))
+
 # Plot industries rankings form 2017-2022 grouped by industry.
 ggplot(poll, aes(year, rank, color = industry)) + 
   geom_point(position = posn_j, shape = 16, alpha = 0.5) +
@@ -176,14 +196,14 @@ ggplot(reputation, aes(`rank_ctegory`)) +
 # Plot distribution of score for each industry, grouped by rank score_category.
 ggplot(reputation, aes(score, fill = industry)) +
   geom_density(color = NA, alpha = 0.5) + 
-  facet_wrap(. ~ `score_ctegory`, ncol = 2) +
+  # facet_wrap(. ~ `score_ctegory`, ncol = 2) +
   labs(title = "Industryies' Score Density", x = "Score") +
   theme(plot.title = element_text(hjust = 0.5))
 
 # Plot distribution of rank for each industry, grouped by rank rank_category.
 ggplot(reputation, aes(rank, fill = industry)) +
   geom_density(color = NA, alpha = 0.5) + 
-  facet_wrap(. ~ `rank_ctegory`, ncol = 3) +
+  # facet_wrap(. ~ `rank_ctegory`, ncol = 3) +
   labs(title = "Industryies' Rank Density", x = "Rank") +
   theme(plot.title = element_text(hjust = 0.5))
   
