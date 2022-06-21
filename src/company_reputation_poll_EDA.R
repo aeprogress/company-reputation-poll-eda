@@ -126,7 +126,7 @@ ggplot(poll, aes(year, rank, color = industry)) +
   theme(plot.title = element_text(hjust = 0.5))
 
 # Plot the mean and SD of industries' rankings.
-ggplot(poll, aes(industry, rank)) +
+ggplot(poll, aes(industry, rank, color = industry)) +
   geom_jitter(width = 0.2, alpha = 0.5, shape = 16) + 
   stat_summary(fun.data = mean_sdl, 
                fun.args = list(mult = 1)) +
@@ -223,6 +223,15 @@ companyTotalScore %>%
 
 reputation %>% 
   filter(company %in% topCompanies$company) -> topScoreCompanies
+
+# Summarize top companies total score.
+summary(topScoreCompanies[4])
+
+# Plot a box plot of top companies scores.
+ggplot(topScoreCompanies, aes(score, color = company)) +
+  geom_boxplot() +
+  labs(title = "Top Companies Score Distribution") +
+  theme(plot.title = element_text(hjust = 0.5))
 
 # Plot top companies score distribution.
 ggplot(topScoreCompanies, aes(company, score, color = company)) + 
