@@ -84,7 +84,7 @@ ggplot(poll, aes(`rank_category`)) +
 # Plot distribution of RQ score for each industry, grouped by rank category.
 ggplot(poll, aes(rq, fill = industry)) +
   geom_density(color = NA, alpha = 0.5) + 
-  facet_wrap(. ~ category, ncol = 2) +
+  facet_wrap(. ~ `rq_category`, ncol = 2) +
   labs(title = "Industryies' RQ Score Density", x = "RQ Score") +
   theme(plot.title = element_text(hjust = 0.5))
 
@@ -208,7 +208,6 @@ reputation %>%
 ggplot(topScoreCompanies, aes(company, score, color = company)) + 
   geom_point(position = posn_j, shape = 16, alpha = 0.5) +
   geom_smooth(method = "lm", se = FALSE) +
-  # facet_wrap(. ~ year, ncol = 3) +
   labs(title = "Top Comanies Score Distribution") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme(plot.title = element_text(hjust = 0.5))
