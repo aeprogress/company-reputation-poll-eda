@@ -6,6 +6,10 @@ library(tidyr)
 library(ggplot2)
 library(cowplot)
 library(wesanderson)
+library(hrbrthemes)
+library(dplyr)
+library(viridis)
+library(forcats)
 
 # Read in with tidytuesdayR package 
 # Install from CRAN via: install.packages("tidytuesdayR")
@@ -182,10 +186,11 @@ ggplot(tech, aes(year, rank, color = company)) +
 
 library(dplyr)
 bestcompany<-df22 %>%
+  mutate(company = fct_reorder(company, desc(rank)))%>%
   group_by(industry) %>%
   slice(which.min(rank))
+  
 
-bestcompany %>% arrange(desc(rank))
 
 bestcompany%>%ggplot( aes(x=company, y=rank,color=industry)) + 
   geom_point(size=3) + 
@@ -223,6 +228,70 @@ changeInrank$rq[changeInrank$rq <= 50] <- "Critical"
 
 ggplot(changeInrank, aes(factor(rq))) +
   geom_bar() 
+
+############################Reputation##############################
+vision <- reputation[reputation$name == 'VISION',]
+trust <-  reputation[reputation$name == 'TRUST',]
+citizenship <-  reputation[reputation$name == 'CITIZENSHIP',]
+culture <-  reputation[reputation$name == 'CULTURE',]
+ethics <-  reputation[reputation$name == 'ETHICS',]
+growth <-  reputation[reputation$name == 'GROWTH',]
+ps <-  reputation[reputation$name == 'P&S',]
+
+
+reputation$cats = "Excellent"
+reputation$cats[reputation$score < 80 & reputation$score > 75] <- "Very Good" 
+reputation$cats[reputation$score <=75 & reputation$score > 70] <- "Good" 
+reputation$cats[reputation$score <= 70 & reputation$score > 65] <- "Fair" 
+reputation$cats[reputation$score <= 65 & reputation$score > 55] <- "Poor" 
+reputation$cats[reputation$score <= 55 & reputation$score > 50] <- "Very Poor" 
+reputation$cats[reputation$score <= 50] <- "Critical"
+
+
+#stacked bar chart for score of tech companies in every name ** this cab be done for other industries
+
+
+tech <- reputation[reputation$industry == 'Tech',]
+ggplot(tech, aes(x = company, y = score, fill = name, label = score)) +
+  geom_bar(stat = "identity") +
+  geom_text(size = 3, position = position_stack(vjust = 0.5))
+
+## same as above but istead od score we show the category of the score
+ggplot(tech, aes(x = company, y = score, fill = name, label = cats)) +
+  geom_bar(stat = "identity") +
+  geom_text(size = 3, position = position_stack(vjust = 0.5))
+
+
+##
+
+topethics<-ethics%>%
+  filter(rank < 11) %>%
+  mutate(company = fct_reorder(company, desc(rank)))
+
+# rank of companies in term of names, plot top 10 in term of ethics
+topethics%>%ggplot( aes(x=company, y=rank,color=industry)) + 
+  geom_point(size=3) + 
+  geom_text(aes(label = rank), color ="white", size = 3)+
+  geom_segment(aes(x=company, 
+                   xend=company, 
+                   y=0, 
+                   yend=rank)) + 
+  labs(title="The Highest Ranked Companies", 
+       subtitle="Rank") +
+  theme_light() +
+  coord_flip() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+
+
+
+#for each company calculate sum of the score of all the names to show the best companies overall
+
+#Hypothesis
+
 
 
 
