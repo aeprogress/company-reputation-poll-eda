@@ -173,13 +173,6 @@ ggplot(reputation, aes(`rank_ctegory`)) +
   labs(title = "Distribution of Companies' Rank Category", x = "Rnak Category", y = "Companies Count") + 
   theme(plot.title = element_text(hjust = 0.5))
 
-# Plot distribution of companies' rank category. 
-ggplot(reputation, aes(`rank_ctegory`)) +
-  geom_text(position = "stack", stat='count',aes(label=..count..), vjust = -0.5)+
-  geom_bar() +
-  labs(title = "Distribution of Companies' Rank Categorize", x = "Rnak Category", y = "Companies Count") + 
-  theme(plot.title = element_text(hjust = 0.5))
-
 # Plot distribution of score for each industry, grouped by rank score_category.
 ggplot(reputation, aes(score, fill = industry)) +
   geom_density(color = NA, alpha = 0.5) + 
