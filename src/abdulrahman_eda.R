@@ -40,6 +40,10 @@ glimpse(reputation)
 skim(poll)
 skim(reputation)
 
+#################################################
+#                   Poll EDA                    #
+#################################################
+
 # Count the different industries.
 poll %>% 
   group_by(industry) %>% 
@@ -53,7 +57,7 @@ poll$rank_cat <- arules::discretize(poll$rq, breaks = 7,
 
 # Plot distribution of companies' rank categorize. 
 ggplot(poll, aes(rank_cat)) +
-  geom_text(position = "stack", stat='count',aes(label=..count..), vjust = -0.5) +
+  geom_text(position = "stack", stat='count',aes(label=..count..), vjust = -0.5)+
   geom_bar() +
   labs(title = "Distribution of Companies' Rank Categorize") + 
   theme(plot.title = element_text(hjust = 0.5))
@@ -105,3 +109,8 @@ ggplot(poll, aes(industry, rank)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),) +
   labs(title = "Destipution of Industryies ranking") +
   theme(plot.title = element_text(hjust = 0.5))
+
+
+#################################################
+#              Reputation EDA                   #
+#################################################
