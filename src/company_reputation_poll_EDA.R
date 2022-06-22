@@ -1,13 +1,18 @@
-#################################################
-#               By Abdulrahman                  #
-#################################################
-
 # Load packages.
 library(tidyverse)
 library(skimr)
-library(janitor)
-library(GGally)
+library(reactable)
 library(ggbump)
+library(tidyr)
+library(ggplot2)
+library(cowplot)
+library(wesanderson)
+library(hrbrthemes)
+library(dplyr)
+library(viridis)
+library(forcats)
+library(ggplot2)
+library(GGally)
 library(arules)
 
 
@@ -16,11 +21,8 @@ library(arules)
 #################################################
 
 # Load dataset.
-tuesdata <- tidytuesdayR::tt_load("2022-05-31")
-
-# Individual dataframes.
-poll <- tuesdata$poll
-reputation <- tuesdata$reputation
+poll <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/poll.csv")
+reputation <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/reputation.csv")
 
 # Append 2022 results.
 poll22 <- poll %>%
@@ -30,15 +32,223 @@ poll22 <- poll %>%
 
 poll <- subset(poll, select = -c(`2022_rank`, `2022_rq`))
 poll <- rbind(poll, poll22)
+poll <- poll %>% drop_na(rank)
+poll <- poll %>% drop_na(change)
 
-# Remove duplicates and NAs.
+#################################################
+#                 Poll EDA                      #
+#################################################
+
+# View poll summary.
+summary(poll)
+
+
+# Changes in ranks over the years for each industry
+#***** Findings: most tech companies has low rank in 2020 while it raises in 2021
+# TODO: extract some intresting scocials or comapanies
+poll %>%
+  filter(industry == "Tech", company == c("Facebook", "Twitter")) %>%
+  ggplot(aes(year, rq, color = company)) +
+  geom_path(alpha = 0.7) +
+  geom_point(size = 3) +
+  labs(title = "The RQ scale for some tech companies", x = "Years") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+#***** Findings: pharams companies has a low during 2020 during covid. However, in 2021 pfizer has a sharpe drop in rank
+poll %>%
+  filter(industry == "Pharma") %>%
+  ggplot(aes(year, rq, color = company)) +
+  geom_path() +
+  geom_point(size = 3) +
+  labs(title = "The RQ Score for Pharma Companies", x = "Years") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+#***** Findings: Automotive companies in general after the year of 2019 has dropped in RQ scale
+poll %>%
+  filter(industry == "Automotive") %>%
+  ggplot(aes(year, rq, color = company)) +
+  geom_path() +
+  geom_point(size = 3) +
+  labs(title = "The RQ Score for Automotive Comapnies", x = "Years") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+#***** Findings: groceries companies has rocked up after 2020
+poll %>%
+  filter(industry == "Groceries") %>%
+  ggplot(aes(year, rq, color = company)) +
+  geom_path() +
+  geom_point(size = 3) +
+  labs(title = "The RQ Score for Groceries Comapnies", x = "Years") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+# Remove duplicates from 2022 records
+company_rank <- poll %>%
+  filter(year == 2022, rank < 11) %>%
+  distinct(company, .keep_all = TRUE) %>% 
+  mutate(company = fct_reorder(company, desc(rank)))
+
+
+#***** Findings: The top 3 companies all belongs to the retail industry
+# Plot top 10 of 2022 using Lollipop Chart along with industry
+ggplot(company_rank, aes(x = company, y = rank, color = industry)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = rank), color = "white", size = 3) +
+  geom_segment(aes(x = company, xend = company, y = 0, yend = rank)) +
+  labs(title = "The Highest Ranked Companies", subtitle = "Rank") +
+  theme_light() +
+  coord_flip() +
+  theme(panel.grid.major.y = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks.y = element_blank())
+
+# best companies of each industry in 2022
+bestcompany <- poll %>%
+  filter(year == 2022) %>% 
+  distinct(company, .keep_all = TRUE) %>% 
+  mutate(company = fct_reorder(company, desc(rank))) %>%
+  group_by(industry) %>%
+  slice(which.min(rank))
+
+#***** Findings:best tech company is Samsung,  for eCommerce Amazon, for cars Toyota, for media we have Spotify
+ggplot(bestcompany, aes(x = company, y = rank, color = industry)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = rank), color = "black", size = 3) +
+  geom_segment(aes(x = company, xend = company, y = 0, yend = rank)) +
+  labs(title = "The Highest Ranked Companies For Each Industry", subtitle = "Rank") +
+  theme_light() +
+  coord_flip() +
+  theme(panel.grid.major.y = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks.y = element_blank())
+
+# worst companies of each industry in 2022
+worstcompany <- poll %>%
+  filter(year == 2022) %>% 
+  distinct(company, .keep_all = TRUE) %>% 
+  mutate(company = fct_reorder(company, rank)) %>%
+  group_by(industry) %>%
+  slice(which.max(rank))
+
+#***** Findings:worst tech company is Twitter,  for eCommerce Wish, for cars General motors, for media we have Fox corporation
+worstcompany %>% ggplot(aes(x = company, y = rank, color = industry)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = rank), color = "black", size = 3) +
+  geom_segment(aes(x = company, xend = company, y = 0, yend = rank)) +
+  labs(title = "The Lowest Ranked Companies For Each Industry", subtitle = "Rank") +
+  theme_light() +
+  coord_flip() +
+  theme(panel.grid.major.y = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks.y = element_blank())
+
+# An RQ score is calculated by:
+# 80 & above: Excellent;
+# 75-79: Very Good ;
+# 70-74: Good ;
+# 65-69: Fair ;
+# 55-64: Poor ;
+# 50-54: Very Poor ;
+# Below 50: Critical
+
+#***** Findings: most companies has a very good score, non got critical points, while 5 companies got very poor results
 poll %>%
   distinct() %>%
-  na.omit() -> poll
+  group_by(company) 
 
-reputation %>%
+
+#***** Findings: The mode of the Rank for all companies in the yea 2022 is `Very Good`.
+# meaning that most of companies in 2022 are rated as `Very Good`.
+poll$rq_cat <- cut(poll$rq,
+                   breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
+                   labels = c("Critical", "Very Poor", "Poor", "Fair", "Good", "Very Good", "Excellent"),
+                   right = FALSE)
+
+poll %>%
+  filter(year == 2022) %>%
   distinct() %>%
-  na.omit() -> reputation
+  ggplot(aes(rq_cat)) +
+  geom_bar(fill = "steelblue") +
+  geom_text(position = "stack", stat = "count", aes(label = ..count..), vjust = -0.5)
+
+
+#################################################
+#                 Reputation EDA                #
+#################################################
+
+
+reputation$cats <- cut(reputation$score,
+                       breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
+                       labels = c("Critical", "Very Poor", "Poor", "Fair", "Good", "Very Good", "Excellent"),
+                       right = FALSE)
+
+# stacked bar chart for score of tech companies in every name ** this cab be done for other industries
+#***** Findings: johnson&johnson has lower scores in every aspect compared to Pfizer
+reputation %>%
+  filter(industry == "Pharma") %>% 
+  ggplot(aes(x = company, y = score, fill = name, label = score)) +
+  geom_bar(stat = "identity") +
+  geom_text(size = 3, position = position_stack(vjust = 0.5)) +
+  labs(title = "The Pharma Companies Detailed Scores for 2022") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+#***** Findings: Honda has excellent score in most aspects except for citizenship the has is Toyota a better citizenship
+reputation %>%
+  filter(industry == "Automotive") %>%
+  ggplot(aes(x = company, y = score, fill = name, label = cats)) +
+  geom_bar(stat = "identity") +
+  geom_text(size = 3, position = position_stack(vjust = 0.5)) +
+  labs(title = "The Automotive Companies Detailed Scores for 2022") +
+  theme(axis.text.x = element_text(angle = 40, vjust = 1, hjust = 1)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+#***** Findings: retails and tech have more companies with high score for culture
+# rank of companies in term of names, plot top 10 in term of ethics
+reputation %>%
+  filter(name == "CULTURE") %>%
+  filter(rank < 11) %>%
+  mutate(company = fct_reorder(company, desc(rank))) %>% 
+  ggplot(aes(x = company, y = rank, color = industry)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = rank), color = "white", size = 3) +
+  geom_segment(aes(x = company, xend = company, y = 0, yend = rank)) +
+  labs(title = "The Highest Ranked Companies", subtitle = "Rank") +
+  theme_light() +
+  coord_flip() +
+  theme(panel.grid.major.y = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks.y = element_blank())
+
+
+# Hypothesis
+### Fitting Linear Model
+lm.fit <- lm(poll$rank ~ poll$rq, data = poll)
+
+summary(lm.fit)
+#***** Findings: the p value of rq is lower than 0.05. Thus, we can reject the null hypothesis
+#< 2.2e-16 as the p value would indicate a significant result,
+# meaning that the actual p value is even smaller than 2.2e-16
+# (a typical threshold is 0.05, anything smaller counts as statistically significant)
+# *****Findings:Multiple R-squared of  0.8497 means the it can explain 84% of variation in rank
+
+### to get the confidence interval lower and upper bound
+confint(lm.fit)
+
+### abline is to draw the estimated line
+plot(poll$rank ~ poll$rq)
+abline(lm.fit, lwd = 3, col = "red")
+
+
+#################################################
+#################################################
+#################################################
+#               Further Exploration             #
+#################################################
 
 # Initialize a seed for the jitter randomization.
 posn_j <- position_jitter(seed = 136)
@@ -69,9 +279,9 @@ poll %>%
 #  Below 50: Critical
 
 poll$`rq_category` <- cut(poll$rq,
-  breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
-  labels = c("Critical", "Very Poor", "Poor", "Fair", "Good", "Very Good", "Excellent"),
-  right = FALSE
+                          breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
+                          labels = c("Critical", "Very Poor", "Poor", "Fair", "Good", "Very Good", "Excellent"),
+                          right = FALSE
 )
 
 
@@ -89,43 +299,43 @@ ggplot(poll, aes(`rq_category`)) +
   theme(plot.title = element_text(hjust = 0.5))
 
 
-# # Categorize ranks.
-# poll$`rank_category` <- cut(poll$rank,
-#   breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
-#   labels = c("Critical", "Very Poor", "Poor", "Fair", "Good", "Very Good", "Excellent"),
-#   right = FALSE)
+#  Categorize ranks.
+poll$`rank_category` <- cut(poll$rank,
+  breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
+  labels = c("Critical", "Very Poor", "Poor", "Fair", "Good", "Very Good", "Excellent"),
+  right = FALSE)
 
-# # poll$`rank_category` <- arules::discretize(poll$rank,
-# #   breaks = 7,
-# #   labels = c(
-# #     "Excellent", "Greate",
-# #     "Good", "Fair", "Poor",
-# #     "Bad", "Critical"
-# #   )
-# # )
+poll$`rank_category` <- arules::discretize(poll$rank,
+  breaks = 7,
+  labels = c(
+    "Excellent", "Greate",
+    "Good", "Fair", "Poor",
+    "Bad", "Critical"
+  )
+)
 
-# # Plot distribution of companies' rank categorize.
-# ggplot(poll, aes(`rank_category`)) +
-#   geom_text(position = "stack", stat = "count", aes(label = ..count..), vjust = -0.5) +
-#   geom_bar() +
-#   labs(title = "Distribution of Companies' Rank Categorize", x = "Rnak Category", y = "Companies Count") +
-#   theme(plot.title = element_text(hjust = 0.5))
+# Plot distribution of companies' rank categorize.
+ggplot(poll, aes(`rank_category`)) +
+  geom_text(position = "stack", stat = "count", aes(label = ..count..), vjust = -0.5) +
+  geom_bar() +
+  labs(title = "Distribution of Companies' Rank Categorize", x = "Rnak Category", y = "Companies Count") +
+  theme(plot.title = element_text(hjust = 0.5))
 
 # Plot distribution of RQ score for each industry, grouped by rank category.
-# ggplot(poll, aes(rq, fill = industry)) +
-#   geom_density(color = NA, alpha = 0.5) +
-#   # facet_wrap(. ~ `rq_category`, ncol = 2) +
-#   labs(title = "Industryies' RQ Score Density", x = "RQ Score") +
-#   theme(plot.title = element_text(hjust = 0.5))
+ggplot(poll, aes(rq, fill = industry)) +
+  geom_density(color = NA, alpha = 0.5) +
+  # facet_wrap(. ~ `rq_category`, ncol = 2) +
+  labs(title = "Industryies' RQ Score Density", x = "RQ Score") +
+  theme(plot.title = element_text(hjust = 0.5))
 
 # Plot industries rankings distributions grouped by year.
-# ggplot(poll, aes(industry, rq, color = industry)) +
-#   geom_point(position = posn_j, shape = 16, alpha = 0.5) +
-#   geom_smooth(method = "lm", se = FALSE) +
-#   facet_wrap(. ~ year, ncol = 1) +
-#   labs(title = "Industryies ranking Distribtions") +
-#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
-#   theme(plot.title = element_text(hjust = 0.5))
+ggplot(poll, aes(industry, rq, color = industry)) +
+  geom_point(position = posn_j, shape = 16, alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(. ~ year, ncol = 1) +
+  labs(title = "Industryies ranking Distribtions") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  theme(plot.title = element_text(hjust = 0.5))
 
 # Plot average industry RQ score for each industry from 2017-2022.
 poll %>%
@@ -203,9 +413,9 @@ skim(reputation)
 
 # Categorize ranks.
 reputation$`score_ctegory` <- cut(reputation$score,
-  breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
-  labels = c("Critical", "Bad", "Poor", "Fair", "Good", "Great", "Excellent"),
-  right = FALSE
+                                  breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
+                                  labels = c("Critical", "Bad", "Poor", "Fair", "Good", "Great", "Excellent"),
+                                  right = FALSE
 )
 
 
@@ -231,12 +441,12 @@ ggplot(reputation, aes(`score_ctegory`)) +
 
 # Categorize scores.
 reputation$`rank_ctegory` <- arules::discretize(reputation$rank,
-  breaks = 7,
-  labels = rev(c(
-    "Excellent", "Great",
-    "Good", "Fair", "Poor",
-    "Bad", "Critical"
-  ))
+                                                breaks = 7,
+                                                labels = rev(c(
+                                                  "Excellent", "Great",
+                                                  "Good", "Fair", "Poor",
+                                                  "Bad", "Critical"
+                                                ))
 )
 
 # Plot distribution of companies' rank category.
@@ -267,13 +477,14 @@ reputation %>%
 
 # Categorize total scores.
 companyTotalScore$`category` <- arules::discretize(companyTotalScore$`total_score`,
-  breaks = 7,
-  labels = rev(c(
-    "Excellent", "Great",
-    "Good", "Fair", "Poor",
-    "Bad", "Critical"
-  ))
+                                                   breaks = 7,
+                                                   labels = rev(c(
+                                                     "Excellent", "Great",
+                                                     "Good", "Fair", "Poor",
+                                                     "Bad", "Critical"
+                                                   ))
 )
+
 # Find top companies.
 companyTotalScore %>%
   filter(category == "Excellent") -> topCompanies
@@ -294,354 +505,3 @@ ggplot(topScoreCompanies, aes(score, fill = company)) +
   geom_density(color = NA, alpha = 0.4) +
   labs(title = "Top Companies Scores Density") +
   theme(plot.title = element_text(hjust = 0.5))
-
-#################################################
-#                  By Lina                      #
-#################################################
-
-library(tidyverse)
-library(skimr)
-library(ggbump)
-library(tidyr)
-library(ggplot2)
-library(cowplot)
-library(wesanderson)
-library(hrbrthemes)
-library(dplyr)
-library(viridis)
-library(forcats)
-library(ggplot2)
-
-# Read in with tidytuesdayR package
-# Install from CRAN via: install.packages("tidytuesdayR")
-# This loads the readme and all the datasets for the week of interest
-
-# Get the Data
-
-poll <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/poll.csv")
-reputation <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/reputation.csv")
-
-summary(poll)
-
-# extracting the results of 2022
-df22 <- poll %>%
-  select(company, industry, change, `2022_rank`, `2022_rq`) %>%
-  mutate(year = 2022, rank = `2022_rank`, rq = `2022_rq`)
-
-# removing old cols
-df22 <- subset(df22, select = -c(`2022_rank`, `2022_rq`))
-poll <- subset(poll, select = -c(`2022_rank`, `2022_rq`))
-
-# merging results of 2022 with the other years to reduce cols
-finalpoll <- rbind(poll, df22)
-
-
-# filtering the industries
-
-changeInrank <- finalpoll %>% drop_na(rank)
-changeInrank <- changeInrank %>% drop_na(change)
-
-Groceries <- changeInrank %>%
-  filter(industry == "Groceries")
-
-Ecommerce <- changeInrank %>%
-  filter(industry == "Ecommerce")
-
-Other <- changeInrank %>%
-  filter(industry == "Other")
-
-Logistics <- changeInrank %>%
-  filter(industry == "Logistics")
-
-Automotive <- changeInrank %>%
-  filter(industry == "Automotive")
-
-Financial_Services <- changeInrank %>%
-  filter(industry == "Financial Services")
-
-Industrial <- changeInrank %>%
-  filter(industry == "Industrial")
-
-Food_Beverage <- changeInrank %>%
-  filter(industry == "Food & Beverage")
-
-Consumer_Goods <- changeInrank %>%
-  filter(industry == "Consumer Goods")
-
-Pharma <- changeInrank %>%
-  filter(industry == "Pharma")
-
-Energy <- changeInrank %>%
-  filter(industry == "Energy")
-
-Tech <- changeInrank %>%
-  filter(industry == "Tech")
-
-
-# Changes in ranks over the years for each industry
-#***** Findings: most tech companies has low rank in 2020 while it raises in 2021
-# TODO: extract some intresting scocials or comapanies
-Tech %>%
-  filter(company == c("Facebook", "Twitter")) %>%
-  ggplot(aes(year, rq, color = company)) +
-  geom_path(alpha = 0.7) +
-  geom_point(size = 3) +
-  labs(title = "The RQ scale for some tech companies", x = "Years") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-
-#***** Findings: pharams companies has a low during 2020 during covid. However, in 2021 pfizer has a sharpe drop in rank
-ggplot(Pharma, aes(year, rq, color = company)) +
-  geom_path() +
-  geom_point(size = 3) +
-  labs(title = "The RQ Score for Pharma Companies", x = "Years") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-
-#***** Findings: Automotive companies in general after the year of 2019 has dropped in RQ scale
-ggplot(Automotive, aes(year, rq, color = company)) +
-  geom_path() +
-  geom_point(size = 3) +
-  labs(title = "The RQ Score for Automotive Comapnies", x = "Years") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-
-#***** Findings: groceries companies has rocked up after 2020
-ggplot(Groceries, aes(year, rq, color = company)) +
-  geom_path() +
-  geom_point(size = 3) +
-  labs(title = "The RQ Score for Groceries Comapnies", x = "Years") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-
-
-# Remove duplicates from 2022 records
-Clean_df22 <- df22 %>% distinct(company, .keep_all = TRUE)
-company_rank <- Clean_df22 %>%
-  filter(rank < 11) %>%
-  mutate(company = fct_reorder(company, desc(rank)))
-
-
-#***** Findings: The top 3 companies all belongs to the retail industry
-# Plot top 10 of 2022 using Lollipop Chart along with industry
-company_rank %>% ggplot(aes(x = company, y = rank, color = industry)) +
-  geom_point(size = 3) +
-  geom_text(aes(label = rank), color = "white", size = 3) +
-  geom_segment(aes(
-    x = company,
-    xend = company,
-    y = 0,
-    yend = rank
-  )) +
-  labs(
-    title = "The Highest Ranked Companies",
-    subtitle = "Rank"
-  ) +
-  theme_light() +
-  coord_flip() +
-  theme(
-    panel.grid.major.y = element_blank(),
-    panel.border = element_blank(),
-    axis.ticks.y = element_blank()
-  )
-
-# best companies of each industry in 2022
-bestcompany <- df22 %>%
-  mutate(company = fct_reorder(company, desc(rank))) %>%
-  group_by(industry) %>%
-  slice(which.min(rank))
-
-#***** Findings:best tech company is Samsung,  for eCommerce Amazon, for cars Toyota, for media we have Spotify
-bestcompany %>% ggplot(aes(x = company, y = rank, color = industry)) +
-  geom_point(size = 3) +
-  geom_text(aes(label = rank), color = "black", size = 3) +
-  geom_segment(aes(
-    x = company,
-    xend = company,
-    y = 0,
-    yend = rank
-  )) +
-  labs(
-    title = "The Highest Ranked Companies For Each Industry",
-    subtitle = "Rank"
-  ) +
-  theme_light() +
-  coord_flip() +
-  theme(
-    panel.grid.major.y = element_blank(),
-    panel.border = element_blank(),
-    axis.ticks.y = element_blank()
-  )
-
-
-# worst companies of each industry in 2022
-worstcompany <- df22 %>%
-  mutate(company = fct_reorder(company, rank)) %>%
-  group_by(industry) %>%
-  slice(which.max(rank))
-
-#***** Findings:worst tech company is Twitter,  for eCommerce Wish, for cars General motors, for media we have Fox corporation
-worstcompany %>% ggplot(aes(x = company, y = rank, color = industry)) +
-  geom_point(size = 3) +
-  geom_text(aes(label = rank), color = "black", size = 3) +
-  geom_segment(aes(
-    x = company,
-    xend = company,
-    y = 0,
-    yend = rank
-  )) +
-  labs(
-    title = "The Lowest Ranked Companies For Each Industry",
-    subtitle = "Rank"
-  ) +
-  theme_light() +
-  coord_flip() +
-  theme(
-    panel.grid.major.y = element_blank(),
-    panel.border = element_blank(),
-    axis.ticks.y = element_blank()
-  )
-
-# An RQ score is calculated by:
-# 80 & above: Excellent;
-# 75-79: Very Good ;
-# 70-74: Good ;
-# 65-69: Fair ;
-# 55-64: Poor ;
-# 50-54: Very Poor ;
-# Below 50: Critical
-
-# changeInrank$rq[changeInrank$rq >= 80] <- "Excellent"
-# changeInrank$rq[changeInrank$rq < 80 & changeInrank$rq >= 75] <- "Very Good"
-# changeInrank$rq[changeInrank$rq < 75 & changeInrank$rq >= 70] <- "Good"
-# changeInrank$rq[changeInrank$rq < 70 & changeInrank$rq >= 65] <- "Fair"
-# changeInrank$rq[changeInrank$rq < 65 & changeInrank$rq >= 55] <- "Poor"
-# changeInrank$rq[changeInrank$rq < 55 & changeInrank$rq >= 50] <- "Very Poor"
-# changeInrank$rq[changeInrank$rq < 50] <- "Critical"
-
-#***** Findings: most companies has a very good score, non got critical points, while 5 companies got very poor results
-changeInrank %>%
-  distinct() %>%
-  group_by(company) 
-
-
-
-#***** Findings: The mode of the Rank for all companies in the yea 2022 is `Very Good`.
-# meaning that most of companies in 2022 are rated as `Very Good`.
-changeInrank$rq_cat <- cut(changeInrank$rq,
-  breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
-  labels = c("Critical", "Very Poor", "Poor", "Fair", "Good", "Very Good", "Excellent"),
-  right = FALSE
-)
-
-changeInrank %>%
-  filter(year == 2022) %>%
-  distinct() %>%
-  ggplot(aes(rq_cat)) +
-    geom_bar(fill = "steelblue") +
-    geom_text(
-      position = "stack", stat = "count", aes(label = ..count..), vjust = -0.5
-    )
-
-# TODO: think about this one
-poll %>% 
-filter(industry == c("Financial Services", "Ecommerce"))  %>% 
-  ggplot(aes(year, rq)) +
-    geom_point(shape = 16, alpha = 0.5) +
-    geom_smooth(method = "lm", se = FALSE) +
-    facet_wrap(. ~ industry, ncol = 1) +
-    labs(title = "Industryies ranking from 2017-2022") +
-    theme(plot.title = element_text(hjust = 0.5)) + 
-    stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1)) +
-    ggsave("plot_lm.png", dpi = 200)
-
-############################ Reputation ##############################
-vision <- reputation[reputation$name == "VISION", ]
-trust <- reputation[reputation$name == "TRUST", ]
-citizenship <- reputation[reputation$name == "CITIZENSHIP", ]
-culture <- reputation[reputation$name == "CULTURE", ]
-ethics <- reputation[reputation$name == "ETHICS", ]
-growth <- reputation[reputation$name == "GROWTH", ]
-ps <- reputation[reputation$name == "P&S", ]
-
-reputation$cats <- "Excellent"
-reputation$cats[reputation$score < 80 & reputation$score > 75] <- "Very Good"
-reputation$cats[reputation$score <= 75 & reputation$score > 70] <- "Good"
-reputation$cats[reputation$score <= 70 & reputation$score > 65] <- "Fair"
-reputation$cats[reputation$score <= 65 & reputation$score > 55] <- "Poor"
-reputation$cats[reputation$score <= 55 & reputation$score > 50] <- "Very Poor"
-reputation$cats[reputation$score <= 50] <- "Critical"
-
-# TODO later
-changeInrank$rq_cat <- cut(changeInrank$rq,
-  breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
-  labels = c("Critical", "Very Poor", "Poor", "Fair", "Good", "Very Good", "Excellent"),
-  right = FALSE
-)
-
-# stacked bar chart for score of tech companies in every name ** this cab be done for other industries
-#***** Findings: johnson&johnson has lower scores in every aspect compared to Pfizer
-phar <- reputation[reputation$industry == "Pharma", ]
-ggplot(phar, aes(x = company, y = score, fill = name, label = score)) +
-  geom_bar(stat = "identity") +
-  geom_text(size = 3, position = position_stack(vjust = 0.5)) +
-  labs(title = "The Pharma Companies Detailed Scores for 2022") +
-  theme(plot.title = element_text(hjust = 0.5))
-
-
-#***** Findings: Honda has excellent score in most aspects except for citizenship the has is Toyota a better citizenship
-auto <- reputation[reputation$industry == "Automotive", ]
-ggplot(auto, aes(x = company, y = score, fill = name, label = cats)) +
-  geom_bar(stat = "identity") +
-  geom_text(size = 3, position = position_stack(vjust = 0.5)) +
-  labs(title = "The Automotive Companies Detailed Scores for 2022") +
-  theme(axis.text.x = element_text(angle = 40, vjust = 1, hjust = 1)) +
-  theme(plot.title = element_text(hjust = 0.5))
-
-
-
-#***** Findings: retails and tech have more companies with high score for culture
-# rank of companies in term of names, plot top 10 in term of ethics
-topculture <- culture %>%
-  filter(rank < 11) %>%
-  mutate(company = fct_reorder(company, desc(rank)))
-
-topculture %>% ggplot(aes(x = company, y = rank, color = industry)) +
-  geom_point(size = 3) +
-  geom_text(aes(label = rank), color = "white", size = 3) +
-  geom_segment(aes(
-    x = company,
-    xend = company,
-    y = 0,
-    yend = rank
-  )) +
-  labs(
-    title = "The Highest Ranked Companies",
-    subtitle = "Rank"
-  ) +
-  theme_light() +
-  coord_flip() +
-  theme(
-    panel.grid.major.y = element_blank(),
-    panel.border = element_blank(),
-    axis.ticks.y = element_blank()
-  )
-
-
-# Hypothesis
-### Fitting Linear Model
-lm.fit <- lm(poll$rank ~ poll$rq, data = poll)
-
-summary(lm.fit)
-#***** Findings: the p value of rq is lower than 0.05. Thus, we can reject the null hypothesis
-#< 2.2e-16 as the p value would indicate a significant result,
-# meaning that the actual p value is even smaller than 2.2e-16
-# (a typical threshold is 0.05, anything smaller counts as statistically significant)
-# *****Findings:Multiple R-squared of  0.8497 means the it can explain 84% of variation in rank
-
-### to get the confidence interval lower and upper bound
-confint(lm.fit)
-
-### abline is to draw the estimated line
-plot(poll$rank ~ poll$rq)
-abline(lm.fit, lwd = 3, col = "red")
