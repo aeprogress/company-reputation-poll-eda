@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Company Reputation Poll Eda"
 author: "Object of Type Closure is not Subsettable Group"
 date: '2022-06-19'
 output: html_document
@@ -12,6 +12,115 @@ knit: (function(input, ...) {
   })
 ---
 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggpubr)
+library(tidyverse)
+library(ggplot2)
+library(factoextra)
+library(janitor)
+library(here)
+library(reactable)
+library(tidyverse)
+library(skimr)
+library(ggbump)
+library(tidyr)
+library(cowplot)
+library(wesanderson)
+library(hrbrthemes)
+library(dplyr)
+library(viridis)
+library(forcats)
+
+```
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+# Introduction
+Using a simple R script, the dataset is explored to present the most interesting and useful insights along with the questions they answer in a report format.
+
+
+# Data
+This data is the result of a partnership between Axios and Harris Poll to gauge the reputation of the most visible brands in America, based on 20 years of Harris Poll research.
+
+- Methodology: The Axios Harris Poll 100 is based on a survey of 33,096 Americans in a nationally representative sample conducted March 11-April 3, 2022. The two-step process starts fresh each year by surveying the public’s top-of-mind awareness of companies that either excel or falter in society.
+
+These 100 “most visible companies” are then ranked by a second group of Americans across the seven key dimensions of reputation to arrive at the ranking. If a company is not on the list, it did not reach a critical level of visibility to be measured
+
+### Data Dictionary
+
+# `poll.csv`
+
+|variable  |class     |description |
+|:---------|:---------|:-----------|
+|company   |character | Company Name |
+|industry  |character | Industry group |
+|2022_rank |integer   | 2022 Rank (1 is better than 100) |
+|2022_rq   |double    | 2022 RQ score. An RQ score is calculated by:  [ (Sum of ratings of each of the 9 attributes)/(the total number of attributes answered x 7) ]  x 100. Score ranges: 80 & above: Excellent; 75-79: Very Good ; 70-74: Good ; 65-69: Fair ; 55-64: Poor ; 50-54: Very Poor ; Below 50: Critical |
+|change    |integer   | Change in rank from 2021         |
+|year      |integer   | Year for that rank/RQ |
+|rank      |integer   | Rank corresponding to the year|
+|rq        |double    | RQ score corresponding to the year |
+
+# `reputation.csv`
+- All ranks in this for current year only
+
+|variable  |class     |description |
+|:---------|:---------|:-----------|
+|company   |character | Company Name |
+|industry  |character | Industry group |
+|name      |character | Name of reputation category (P&S = Product and Service) |
+|score     |double    | Score for reputation category |
+|rank      |integer   | Rank for reputation category |
+
+
+
+### Basic Information
+```{r, echo = FALSE, message=FALSE}
+# Get the Data
+
+poll <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/poll.csv')
+reputation <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/reputation.csv')
+
+```
+
+
+```{r , echo = FALSE}
+reactable(poll)
+```
+
+```{r}
+summary(poll)
+```
+
+By looking at Q1 and Q3 values we can observe the range of some metrics of the sample
+
+# Poll EDA
+
+```{r}
+
+```
+
+
+```{r , echo = FALSE}
+reactable(reputation)
+```
+
+```{r}
+summary(reputation)
+```
+
+By looking at Q1 and Q3 values we can observe the range of some metrics of the sample
+
+# Reputation EDA
+
+```{r}
+
+```
+
+
+
+
