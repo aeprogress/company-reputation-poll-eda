@@ -65,9 +65,9 @@ poll %>%
 #  Below 50: Critical
 
 poll$`2022_rq_cat` <- cut(poll$`2022_rq`,
-  breaks = c(0, 50, 54, 64, 69, 74, 79, Inf),
+  breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
   labels = c("Critical", "Bad", "Poor", "Fair", "Good", "Great", "Excellent"),
-  right = TRUE)
+  right = FALSE)
 
 ggplot(poll, aes(`2022_rq_cat`)) +
   geom_text(
@@ -205,14 +205,24 @@ glimpse(reputation)
 skim(reputation)
 
 # Categorize ranks.
-reputation$`score_ctegory` <- arules::discretize(reputation$score,
-  breaks = 7,
-  labels = rev(c(
-    "Excellent", "Great",
-    "Good", "Fair", "Poor",
-    "Bad", "Critical"
-  ))
-)
+reputation$`score_ctegory` <- cut(reputation$score,
+  breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
+  labels = c("Critical", "Bad", "Poor", "Fair", "Good", "Great", "Excellent"),
+  right = FALSE)
+
+
+
+# boxplot plot of `score` by `indusry`
+ggplot(reputation, aes(industry, score)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1))
+  # stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "red"
+
+ggplot(reputation, aes(industry, score)) +
+  geom_point(alpha = 0.26) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "red")
+
 
 # Plot distribution of companies' score categorize.
 ggplot(reputation, aes(`score_ctegory`)) +
@@ -286,3 +296,4 @@ ggplot(topScoreCompanies, aes(score, fill = company)) +
   geom_density(color = NA, alpha = 0.4) +
   labs(title = "Top Companies Scores Desity") +
   theme(plot.title = element_text(hjust = 0.5))
+
