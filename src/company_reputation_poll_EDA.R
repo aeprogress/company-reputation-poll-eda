@@ -18,7 +18,7 @@ tuesdata <- tidytuesdayR::tt_load("2022-05-31")
 poll <- tuesdata$poll
 reputation <- tuesdata$reputation
 
-# Appened 2022 results.
+# Append 2022 results.
 poll22 <- poll %>%
   select(company, industry, change, `2022_rank`, `2022_rq`) %>%
   mutate(year = 2022, rank = `2022_rank`, rq = `2022_rq`) %>%
@@ -212,7 +212,7 @@ reputation$`score_ctegory` <- cut(reputation$score,
 
 
 
-# boxplot plot of `score` by `indusry`
+# boxplot plot of `score` by `industry`
 ggplot(reputation, aes(industry, score)) +
   geom_boxplot() +
   theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) +
@@ -288,13 +288,13 @@ reputation %>%
 ggplot(topScoreCompanies, aes(company, score, color = company)) +
   geom_point(position = posn_j, shape = 16, alpha = 0.5) +
   geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Top Comanies Score Distribution") +
+  labs(title = "Top Companies Score Distribution") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
   theme(plot.title = element_text(hjust = 0.5))
 
 # Plot the density of top companies scores.
 ggplot(topScoreCompanies, aes(score, fill = company)) +
   geom_density(color = NA, alpha = 0.4) +
-  labs(title = "Top Companies Scores Desity") +
+  labs(title = "Top Companies Scores Density") +
   theme(plot.title = element_text(hjust = 0.5))
 
