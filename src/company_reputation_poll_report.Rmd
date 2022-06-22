@@ -313,24 +313,26 @@ Tech %>%
   geom_point(size = 3) +
   labs(title = "The RQ scale for some tech companies", x = "Years") +
   theme(plot.title = element_text(hjust = 0.5))
+```
 
-
+```{R}
 #***** Findings: pharams companies has a low during 2020 during covid. However, in 2021 pfizer has a sharpe drop in rank
 ggplot(Pharma, aes(year, rq, color = company)) +
   geom_path() +
   geom_point(size = 3) +
   labs(title = "The RQ Score for Pharma Companies", x = "Years") +
   theme(plot.title = element_text(hjust = 0.5))
+```
 
-
+```{R}
 #***** Findings: Automotive companies in general after the year of 2019 has dropped in RQ scale
 ggplot(Automotive, aes(year, rq, color = company)) +
   geom_path() +
   geom_point(size = 3) +
   labs(title = "The RQ Score for Automotive Comapnies", x = "Years") +
   theme(plot.title = element_text(hjust = 0.5))
-
-
+```
+```{R}
 #***** Findings: groceries companies has rocked up after 2020
 ggplot(Groceries, aes(year, rq, color = company)) +
   geom_path() +
