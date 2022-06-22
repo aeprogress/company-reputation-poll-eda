@@ -254,7 +254,7 @@ topculture%>%ggplot( aes(x=company, y=rank,color=industry)) +
 
 #Hypothesis
 ###Fitting Linear Model
-lm.fit <- lm(poll$rank~ poll$rq , data = poll)
+lm.fit <- lm(poll$rank~poll$rq , data = poll)
 
 summary(lm.fit)
 #*****Findings: the p value of rq is lower than 0.05. Thus, we can reject the null hypothesis
@@ -267,7 +267,7 @@ summary(lm.fit)
 confint(lm.fit)
 
 ###abline is to draw the estimated line 
-plot(poll$rq ~ poll$rank)
+plot( poll$rank~poll$rq )
 abline(lm.fit, lwd = 3, col = "red")
 
 
