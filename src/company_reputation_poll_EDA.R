@@ -1,0 +1,300 @@
+# Load packages.
+library(tidyverse)
+library(skimr)
+library(janitor)
+library(GGally)
+library(ggbump)
+library(arules)
+
+
+#################################################
+#                 Data Prep.                    #
+#################################################
+
+# Load dataset.
+tuesdata <- tidytuesdayR::tt_load("2022-05-31")
+
+# Individual dataframes.
+poll <- tuesdata$poll
+reputation <- tuesdata$reputation
+
+# Appened 2022 results.
+poll22 <- poll %>%
+  select(company, industry, change, `2022_rank`, `2022_rq`) %>%
+  mutate(year = 2022, rank = `2022_rank`, rq = `2022_rq`) %>%
+  select(-c(`2022_rank`, `2022_rq`))
+
+poll <- subset(poll, select = -c(`2022_rank`, `2022_rq`))
+poll <- rbind(poll, poll22)
+
+# Remove duplicates and NAs.
+poll %>%
+  distinct() %>%
+  na.omit() -> poll
+
+reputation %>%
+  distinct() %>%
+  na.omit() -> reputation
+
+# Initialize a seed for the jitter randomization.
+posn_j <- position_jitter(seed = 136)
+
+#################################################
+#                   Poll EDA                    #
+#################################################
+
+# Sample poll datasets.
+glimpse(poll)
+
+# View a summary of poll datasets.
+skim(poll)
+
+# Count the different industries.
+poll %>%
+  group_by(industry) %>%
+  count(industry)
+
+# According to the dataset describtion
+# Score ranges:
+# 80 & above: Excellent
+#  75-79: Very Good
+#  70-74: Good
+#  65-69: Fair
+#  55-64: Poor
+#  50-54: Very Poor
+#  Below 50: Critical
+
+poll$`2022_rq_cat` <- cut(poll$`2022_rq`,
+  breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
+  labels = c("Critical", "Bad", "Poor", "Fair", "Good", "Great", "Excellent"),
+  right = FALSE)
+
+ggplot(poll, aes(`2022_rq_cat`)) +
+  geom_text(
+    position = "stack", stat = "count", aes(label = ..count..), vjust = -0.5
+  ) +
+  geom_bar() +
+  labs(
+    title = "Distribution of Companies' RQ Score Categorize",
+    x = "RQ Score Category",
+    y = "Companies Count"
+  ) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+# Categorize RQ scores.
+poll$`rq_category` <- arules::discretize(poll$rq,
+  breaks = 7,
+  labels = c(
+    "Excellent", "Greate",
+    "Good", "Fair", "Poor",
+    "Bad", "Critical"
+  )
+)
+
+# Plot distribution of companies' RQ Score categorize.
+ggplot(poll, aes(`rq_category`)) +
+  geom_text(position = "stack", stat = "count", aes(label = ..count..), vjust = -0.5) +
+  geom_bar() +
+  labs(title = "Distribution of Companies' RQ Score Categorize", x = "RQ Score Category", y = "Companies Count") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Categorize ranks.
+poll$`rank_category` <- arules::discretize(poll$rank,
+  breaks = 7,
+  labels = c(
+    "Excellent", "Greate",
+    "Good", "Fair", "Poor",
+    "Bad", "Critical"
+  )
+)
+
+# Plot distribution of companies' rank categorize.
+ggplot(poll, aes(`rank_category`)) +
+  geom_text(position = "stack", stat = "count", aes(label = ..count..), vjust = -0.5) +
+  geom_bar() +
+  labs(title = "Distribution of Companies' Rank Categorize", x = "Rnak Category", y = "Companies Count") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot distribution of RQ score for each industry, grouped by rank category.
+ggplot(poll, aes(rq, fill = industry)) +
+  geom_density(color = NA, alpha = 0.5) +
+  facet_wrap(. ~ `rq_category`, ncol = 2) +
+  labs(title = "Industryies' RQ Score Density", x = "RQ Score") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot industries rankings distributions grouped by year.
+ggplot(poll, aes(industry, rank, color = industry)) +
+  geom_point(position = posn_j, shape = 16, alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(. ~ year, ncol = 3) +
+  labs(title = "Industryies ranking Distribtions") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot average industry RQ score for each industry from 2017-2022.
+poll %>%
+  group_by(industry, year) %>%
+  summarise(.groups = "keep", avg_rq = mean(rq)) %>%
+  ggplot(aes(year, `avg_rq`, color = industry)) +
+  geom_bump() +
+  geom_point(size = 1) +
+  labs(title = "Average Industry RQ Score from 2017-2022", y = "Average RQ Score") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot average industry rank for each industry from 2017-2022.
+poll %>%
+  group_by(industry, year) %>%
+  summarise(.groups = "keep", avg_rank = mean(rank)) %>%
+  ggplot(aes(year, `avg_rank`, color = industry)) +
+  geom_bump() +
+  geom_point(size = 1) +
+  labs(title = "Average Industry Rank from 2017-2022", y = "Average Rank") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot industries rankings form 2017-2022 grouped by industry.
+ggplot(poll, aes(year, rank, color = industry)) +
+  geom_point(position = posn_j, shape = 16, alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(. ~ industry, ncol = 3) +
+  labs(title = "Industryies ranking from 2017-2022") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot the mean and SD of industries' rankings.
+ggplot(poll, aes(industry, rank)) +
+  geom_jitter(width = 0.2, alpha = 0.5, shape = 16) +
+  stat_summary(
+    fun.data = mean_sdl,
+    fun.args = list(mult = 1)
+  ) +
+  labs(title = "Industryies' ranking Mean and Standard Deviation") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot rank density of each industry.
+ggplot(poll, aes(x = rank, fill = industry)) +
+  geom_density(color = NA) +
+  facet_wrap(. ~ industry, ncol = 3) +
+  labs(title = "Industryies' ranking Density") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot rank density of each industry grouped by year.
+ggplot(poll, aes(x = rank, fill = industry)) +
+  geom_density(color = NA, alpha = 0.5) +
+  facet_wrap(. ~ year, ncol = 2) +
+  labs(title = "Industryies' ranking Density") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot a violin graph of industries' rankings.
+ggplot(poll, aes(industry, rank)) +
+  geom_violin(scale = "count") +
+  # geom_jitter(width = 0.2, alpha = 0.5, shape = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1), ) +
+  labs(title = "Destipution of Industryies ranking") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+#################################################
+#              Reputation EDA                   #
+#################################################
+
+# Sample reputation datasets.
+glimpse(reputation)
+
+# View a summary of reputation datasets.
+skim(reputation)
+
+# Categorize ranks.
+reputation$`score_ctegory` <- cut(reputation$score,
+  breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
+  labels = c("Critical", "Bad", "Poor", "Fair", "Good", "Great", "Excellent"),
+  right = FALSE)
+
+
+
+# boxplot plot of `score` by `indusry`
+ggplot(reputation, aes(industry, score)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) +
+  ggsave("plot.png", dpi = 200)
+  # stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "red"
+
+ggplot(reputation, aes(industry, score)) +
+  geom_point(alpha = 0.26) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "red")
+
+
+# Plot distribution of companies' score categorize.
+ggplot(reputation, aes(`score_ctegory`)) +
+  geom_text(position = "stack", stat = "count", aes(label = ..count..), vjust = -0.5) +
+  geom_bar() +
+  labs(title = "Distribution of Companies' score Categorize", x = "Score Category", y = "Companies Count") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Categorize scores.
+reputation$`rank_ctegory` <- arules::discretize(reputation$rank,
+  breaks = 7,
+  labels = rev(c(
+    "Excellent", "Great",
+    "Good", "Fair", "Poor",
+    "Bad", "Critical"
+  ))
+)
+
+# Plot distribution of companies' rank category.
+ggplot(reputation, aes(`rank_ctegory`)) +
+  geom_text(position = "stack", stat = "count", aes(label = ..count..), vjust = -0.5) +
+  geom_bar() +
+  labs(title = "Distribution of Companies' Rank Category", x = "Rnak Category", y = "Companies Count") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot distribution of score for each industry, grouped by rank score_category.
+ggplot(reputation, aes(score, fill = industry)) +
+  geom_density(color = NA, alpha = 0.5) +
+  # facet_wrap(. ~ `score_ctegory`, ncol = 2) +
+  labs(title = "Industryies' Score Density", x = "Score") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot distribution of rank for each industry, grouped by rank rank_category.
+ggplot(reputation, aes(rank, fill = industry)) +
+  geom_density(color = NA, alpha = 0.5) +
+  # facet_wrap(. ~ `rank_ctegory`, ncol = 3) +
+  labs(title = "Industryies' Rank Density", x = "Rank") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Find companies' total score.
+reputation %>%
+  group_by(company) %>%
+  summarise(total_score = sum(score)) -> companyTotalScore
+
+# Categorize total scores.
+companyTotalScore$`category` <- arules::discretize(companyTotalScore$`total_score`,
+  breaks = 7,
+  labels = rev(c(
+    "Excellent", "Great",
+    "Good", "Fair", "Poor",
+    "Bad", "Critical"
+  ))
+)
+# Find top companies.
+companyTotalScore %>%
+  filter(category == "Excellent") -> topCompanies
+
+reputation %>%
+  filter(company %in% topCompanies$company) -> topScoreCompanies
+
+# Plot top companies score distribution.
+ggplot(topScoreCompanies, aes(company, score, color = company)) +
+  geom_point(position = posn_j, shape = 16, alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Top Comanies Score Distribution") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Plot the density of top companies scores.
+ggplot(topScoreCompanies, aes(score, fill = company)) +
+  geom_density(color = NA, alpha = 0.4) +
+  labs(title = "Top Companies Scores Desity") +
+  theme(plot.title = element_text(hjust = 0.5))
+
