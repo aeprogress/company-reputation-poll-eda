@@ -4,7 +4,6 @@
 # 2022 Axios-Harris Poll
 
 The data comes from [Axios and Harris Poll](https://www.axios.com/2022/05/24/2022-axios-harris-poll-100-rankings). 
-The Axios Harris Poll 100 is based on a survey of 33,096 Americans in a nationally representative sample. The two-step process starts fresh each year by surveying the public’s top-of-mind awareness of companies that either excel or falter in society. These 100 “most visible companies” are then rated by a second group of Americans across the seven key dimensions of reputation to determine the ranking. If a company is not on the list, it did not reach a critical level of visibility to be measured.
 
 No poll is perfect, but methodology is included below, and see the links for [Axios and Harris Poll](https://www.axios.com/2022/05/24/2022-axios-harris-poll-100-rankings) or [The Harris Poll overview for more details](https://theharrispoll.com/partners/media/axios-harrispoll-100/).
 
