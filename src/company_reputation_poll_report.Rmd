@@ -244,7 +244,7 @@ Now, the following figures show some of the major trends for many companies in d
 #***** Findings: most tech companies has low rank in 2020 while it raises in 2021
 # TODO: extract some intresting scocials or comapanies
 poll %>%
-  filter(industry == "Tech", company == c("Facebook", "Samsung")) %>%
+  filter(industry == "Tech") %>%
   ggplot(aes(year, rq, color = company)) +
   geom_path(alpha = 0.7) +
   geom_point(size = 3) +
