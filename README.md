@@ -1,4 +1,5 @@
-# company-reputation-poll-eda
+# Compan Reputation Poll EDA
+View the report [here](https://aeprogress.github.io/company-reputation-poll-eda/company_reputation_poll_report.html)
 
 ## Dataset Information
 # 2022 Axios-Harris Poll
