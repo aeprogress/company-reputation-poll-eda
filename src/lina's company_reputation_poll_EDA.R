@@ -215,27 +215,26 @@ reputation$cats[reputation$score <= 50] <- "Critical"
 
 
 #stacked bar chart for score of tech companies in every name ** this cab be done for other industries
-
-
-tech <- reputation[reputation$industry == 'Tech',]
-ggplot(tech, aes(x = company, y = score, fill = name, label = score)) +
+#*****Findings: johnson&johnson has lower scores in every aspect compared to Pfizer 
+phar <- reputation[reputation$industry == 'Pharma',]
+ggplot(phar, aes(x = company, y = score, fill = name, label = score)) +
   geom_bar(stat = "identity") +
   geom_text(size = 3, position = position_stack(vjust = 0.5))
 
-## same as above but istead od score we show the category of the score
-ggplot(tech, aes(x = company, y = score, fill = name, label = cats)) +
+#*****Findings: Honda has excellent score in most aspect expect for citizenship the has is Toyota a better citizenship
+auto <- reputation[reputation$industry == 'Automotive',]
+ggplot(auto, aes(x = company, y = score, fill = name, label = cats)) +
   geom_bar(stat = "identity") +
   geom_text(size = 3, position = position_stack(vjust = 0.5))
 
 
-##
-
-topethics<-ethics%>%
+#*****Findings: retails and tech have more companies with high score for culture
+# rank of companies in term of names, plot top 10 in term of ethics
+topculture<-culture%>%
   filter(rank < 11) %>%
   mutate(company = fct_reorder(company, desc(rank)))
 
-# rank of companies in term of names, plot top 10 in term of ethics
-topethics%>%ggplot( aes(x=company, y=rank,color=industry)) + 
+topculture%>%ggplot( aes(x=company, y=rank,color=industry)) + 
   geom_point(size=3) + 
   geom_text(aes(label = rank), color ="white", size = 3)+
   geom_segment(aes(x=company, 
@@ -252,9 +251,6 @@ topethics%>%ggplot( aes(x=company, y=rank,color=industry)) +
     axis.ticks.y = element_blank()
   )
 
-
-
-#for each company calculate sum of the score of all the names to show the best companies overall
 
 #Hypothesis
 
