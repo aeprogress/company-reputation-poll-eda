@@ -90,7 +90,7 @@ ggplot(Pharma, aes(year, rank, color = company)) +
 
 #*****Findings: Automotive companies in general after the year of 2019 has drop in rank
 ggplot(Automotive, aes(year, rank, color = company)) +
-   geom_bump()+
+  geom_bump()+
   geom_point(size = 3)
 
 #*****Findings: groceries companies has rocked up after 2020
@@ -215,27 +215,26 @@ reputation$cats[reputation$score <= 50] <- "Critical"
 
 
 #stacked bar chart for score of tech companies in every name ** this cab be done for other industries
-
-
-tech <- reputation[reputation$industry == 'Tech',]
-ggplot(tech, aes(x = company, y = score, fill = name, label = score)) +
+#*****Findings: johnson&johnson has lower scores in every aspect compared to Pfizer 
+phar <- reputation[reputation$industry == 'Pharma',]
+ggplot(phar, aes(x = company, y = score, fill = name, label = score)) +
   geom_bar(stat = "identity") +
   geom_text(size = 3, position = position_stack(vjust = 0.5))
 
-## same as above but istead od score we show the category of the score
-ggplot(tech, aes(x = company, y = score, fill = name, label = cats)) +
+#*****Findings: Honda has excellent score in most aspect expect for citizenship the has is Toyota a better citizenship
+auto <- reputation[reputation$industry == 'Automotive',]
+ggplot(auto, aes(x = company, y = score, fill = name, label = cats)) +
   geom_bar(stat = "identity") +
   geom_text(size = 3, position = position_stack(vjust = 0.5))
 
 
-##
-
-topethics<-ethics%>%
+#*****Findings: retails and tech have more companies with high score for culture
+# rank of companies in term of names, plot top 10 in term of ethics
+topculture<-culture%>%
   filter(rank < 11) %>%
   mutate(company = fct_reorder(company, desc(rank)))
 
-# rank of companies in term of names, plot top 10 in term of ethics
-topethics%>%ggplot( aes(x=company, y=rank,color=industry)) + 
+topculture%>%ggplot( aes(x=company, y=rank,color=industry)) + 
   geom_point(size=3) + 
   geom_text(aes(label = rank), color ="white", size = 3)+
   geom_segment(aes(x=company, 
@@ -253,10 +252,23 @@ topethics%>%ggplot( aes(x=company, y=rank,color=industry)) +
   )
 
 
-
-#for each company calculate sum of the score of all the names to show the best companies overall
-
 #Hypothesis
+###Fitting Linear Model
+lm.fit <- lm(poll$rank~ poll$rq , data = poll)
+
+summary(lm.fit)
+#*****Findings: the p value of rq is lower than 0.05. Thus, we can reject the null hypothesis
+#< 2.2e-16 as the p value would indicate a significant result, 
+#meaning that the actual p value is even smaller than 2.2e-16 
+#(a typical threshold is 0.05, anything smaller counts as statistically significant)
+# *****Findings:Multiple R-squared of  0.8497 means the it can explain 84% of variation in rank
+
+###to get the confidence interval lower and upper bound
+confint(lm.fit)
+
+###abline is to draw the estimated line 
+plot(poll$rq ~ poll$rank)
+abline(lm.fit, lwd = 3, col = "red")
 
 
 
