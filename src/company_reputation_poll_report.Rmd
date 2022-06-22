@@ -3,15 +3,14 @@ title: "Company Reputation Poll Eda"
 author: "Object of Type Closure is not Subsettable Group"
 date: '2022-06-19'
 output: html_document
-
 knit: (function(input, ...) {
+    )
     rmarkdown::render(
       input,
       output_dir = "../"
-    )
-  })
+editor_options: 
+  chunk_output_type: inline
 ---
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -35,51 +34,24 @@ library(forcats)
 
 ```
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 # Introduction
-Using a simple R script, the dataset is explored to present the most interesting and useful insights along with the questions they answer in a report format.
 
+Many factors affect the reputation of companies. Axios and Harris have studied the reputations of the top 100 companies in the United States of America based on surveys that cover the opinions of more than 33,000 participants that have been conducted since 2002. In this report, the focus will be to explore companies' reputations over the last five years.
 
 # Data
-This data is the result of a partnership between Axios and Harris Poll to gauge the reputation of the most visible brands in America, based on 20 years of Harris Poll research.
 
-- Methodology: The Axios Harris Poll 100 is based on a survey of 33,096 Americans in a nationally representative sample conducted March 11-April 3, 2022. The two-step process starts fresh each year by surveying the public’s top-of-mind awareness of companies that either excel or falter in society.
+This data is the result of a partnership between Axios and Harris Poll to gauge the reputation of the most visible companies in America, based on 20 years of Harris Poll research.
 
-These 100 “most visible companies” are then ranked by a second group of Americans across the seven key dimensions of reputation to arrive at the ranking. If a company is not on the list, it did not reach a critical level of visibility to be measured
+## Methodology
 
-### Data Dictionary
+The Axios Harris Poll 100 is based on a survey of 33,096 Americans in a nationally representative sample conducted from March 11 to April 3, 2022. The two-step process starts fresh each year by surveying the public's top-of-mind awareness of companies that either excel or falter in society. The poll only covers 100 companies that are classified as "most visible companies". The classification process is based on the count of the most repeated 100 companies in the representative sample's poll.
 
-# `poll.csv`
+## Data Dictionary
 
-|variable  |class     |description |
-|:---------|:---------|:-----------|
-|company   |character | Company Name |
-|industry  |character | Industry group |
-|2022_rank |integer   | 2022 Rank (1 is better than 100) |
-|2022_rq   |double    | 2022 RQ score. An RQ score is calculated by:  [ (Sum of ratings of each of the 9 attributes)/(the total number of attributes answered x 7) ]  x 100. Score ranges: 80 & above: Excellent; 75-79: Very Good ; 70-74: Good ; 65-69: Fair ; 55-64: Poor ; 50-54: Very Poor ; Below 50: Critical |
-|change    |integer   | Change in rank from 2021         |
-|year      |integer   | Year for that rank/RQ |
-|rank      |integer   | Rank corresponding to the year|
-|rq        |double    | RQ score corresponding to the year |
+The dataset contains two separate files, `poll.csv` and `reputation.csv`. The poll file contains information about the rank and RQ score from 2017 to 2022, while the reputation file contains the scores of the 7 attributes in 2022 only.
 
-# `reputation.csv`
-- All ranks in this for current year only
-
-|variable  |class     |description |
-|:---------|:---------|:-----------|
-|company   |character | Company Name |
-|industry  |character | Industry group |
-|name      |character | Name of reputation category (P&S = Product and Service) |
-|score     |double    | Score for reputation category |
-|rank      |integer   | Rank for reputation category |
-
-
-
-### Basic Information
 ```{r, echo = FALSE, message=FALSE}
+
 # Get the Data
 
 poll <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/poll.csv')
@@ -87,68 +59,68 @@ reputation <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience
 
 ```
 
+### Poll data
 
-```{r , echo = FALSE}
+| variable  | class     | description                                                                                                                                                                                                                                                                                |
+|:----------------|:----------------|:-------------------------------------|
+| company   | character | Company Name                                                                                                                                                                                                                                                                               |
+| industry  | character | Industry group                                                                                                                                                                                                                                                                             |
+| 2022_rank | integer   | 2022 Rank (1 is better than 100)                                                                                                                                                                                                                                                           |
+| 2022_rq   | double    | 2022 RQ score. An RQ score is calculated by: [ (Sum of ratings of each of the 9 attributes)/(the total number of attributes answered x 7) ] x 100. Score ranges: 80 & above: Excellent; 75-79: Very Good ; 70-74: Good ; 65-69: Fair ; 55-64: Poor ; 50-54: Very Poor ; Below 50: Critical |
+| change    | integer   | Change in rank from 2021                                                                                                                                                                                                                                                                   |
+| year      | integer   | Year for that rank/RQ                                                                                                                                                                                                                                                                      |
+| rank      | integer   | Rank corresponding to the year                                                                                                                                                                                                                                                             |
+| rq        | double    | RQ score corresponding to the year                                                                                                                                                                                                                                                         |
+
+: Description of the parameters in the poll.csv file
+
+`poll.csv`
+
+```{r}
 reactable(poll)
 ```
+
+### Reputation data
+
+| variable | class     | description                                             |
+|:-----------------|:-----------------|:------------------------------------|
+| company  | character | Company Name                                            |
+| industry | character | Industry group                                          |
+| name     | character | Name of reputation category (P&S = Product and Service) |
+| score    | double    | Score for reputation category                           |
+| rank     | integer   | Rank for reputation category                            |
+
+: Description of the parameters in the reputation.csv file.
+
+`reputation.csv`
+
+```{r}
+reactable(reputation)
+```
+
+# Explanatory Data Analysis (EDA)
+
+## Poll EDA
+
+### Data munging
+
+Now, the summary of the poll data is represented below. Some parameters have NA values which means that the data requires cleaning before starting the analysis. However, these NA are not meaningless, as the NA in "change" conveys that the company did not change its ranking between at least two following years.
 
 ```{r}
 summary(poll)
 ```
 
-By looking at Q1 and Q3 values we can observe the range of some metrics of the sample
-
-# Poll EDA
+First, the data must be cleaned from replicates and NAs.
 
 ```{r}
-
+poll %>%
+  distinct() %>%
+  na.omit() -> cpoll
 ```
 
-
-```{r , echo = FALSE}
-reactable(reputation)
-```
+Second, in the poll, there are two redundant columns for the rank and the RQ score of 2022. Hence, these columns will be removed and their contents will be merged with the rank and RQ columns, and cleaned again.
 
 ```{r}
-summary(reputation)
-```
-
-By looking at Q1 and Q3 values we can observe the range of some metrics of the sample
-
-# Reputation EDA
-
-```{r}
-
-```
-
-
-
-# useful from the code. need to be rearrange
-
-```{R}
-library(tidyverse)
-library(skimr)
-library(ggbump)
-library(tidyr)
-library(ggplot2)
-library(cowplot)
-library(wesanderson)
-library(hrbrthemes)
-library(dplyr)
-library(viridis)
-library(forcats)
-library(ggplot2)
-
-# Read in with tidytuesdayR package
-# Install from CRAN via: install.packages("tidytuesdayR")
-# This loads the readme and all the datasets for the week of interest
-
-# Get the Data
-
-poll <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/poll.csv")
-reputation <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/reputation.csv")
-
-
 # extracting the results of 2022
 df22 <- poll %>%
   select(company, industry, change, `2022_rank`, `2022_rq`) %>%
@@ -160,8 +132,11 @@ poll <- subset(poll, select = -c(`2022_rank`, `2022_rq`))
 
 # merging results of 2022 with the other years to reduce cols
 finalpoll <- rbind(poll, df22)
+```
 
+Now, the data will be separated to its industrial categories to examine each category.
 
+```{r}
 # filtering the industries
 
 changeInrank <- finalpoll %>% drop_na(rank)
@@ -204,18 +179,32 @@ Tech <- changeInrank %>%
   filter(industry == "Tech")
 ```
 
-```{R}
-#*****Findings: The top 3 companies all belongs to the retail industry
+### Data visualization
+
+The figure below shows the top ten companies in 2022, with their respective industries. It is evident that the top three companies are from the same, Retail, industry, in fact, the top two companies remained in their respective rank since 2017.
+
+```{r}
+#***** Findings: The top 3 companies all belongs to the retail industry
 # Plot top 10 of 2022 using Lollipop Chart along with industry
-company_rank%>%ggplot( aes(x=company, y=rank,color=industry)) + 
-  geom_point(size=3) + 
-  geom_text(aes(label = rank), color ="white", size = 3)+
-  geom_segment(aes(x=company, 
-                   xend=company, 
-                   y=0, 
-                   yend=rank)) + 
-  labs(title="The Highest Ranked Companies", 
-       subtitle="Rank") +
+# Remove duplicates from 2022 records
+Clean_df22 <- df22 %>% distinct(company, .keep_all = TRUE)
+company_rank <- Clean_df22 %>%
+  filter(rank < 11) %>%
+  mutate(company = fct_reorder(company, desc(rank)))
+
+company_rank %>% ggplot(aes(x = company, y = rank, color = industry)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = rank), color = "white", size = 3) +
+  geom_segment(aes(
+    x = company,
+    xend = company,
+    y = 0,
+    yend = rank
+  )) +
+  labs(
+    title = "The Highest Ranked Companies",
+    subtitle = "Rank"
+  ) +
   theme_light() +
   coord_flip() +
   theme(
@@ -225,8 +214,15 @@ company_rank%>%ggplot( aes(x=company, y=rank,color=industry)) +
   )
 ```
 
+It is apparent that retail companies have the best RQ scores, as illustrated in the following figure; preserving the top two since 2017. Meanwhile, food delivery appears to have lowest RQ scores, with best company in that category, DoorDash, having the 68^th^ rank.
 
 ```{r}
+# best companies of each industry in 2022
+bestcompany <- df22 %>%
+  mutate(company = fct_reorder(company, desc(rank))) %>%
+  group_by(industry) %>%
+  slice(which.min(rank))
+
 #***** Findings:best tech company is Samsung,  for eCommerce Amazon, for cars Toyota, for media we have Spotify
 bestcompany %>% ggplot(aes(x = company, y = rank, color = industry)) +
   geom_point(size = 3) +
@@ -250,8 +246,9 @@ bestcompany %>% ggplot(aes(x = company, y = rank, color = industry)) +
   )
 ```
 
-```{R}
+In the contrary to the previous figure, this figure shows the lowest ranking companies in their respective category.
 
+```{r}
 # worst companies of each industry in 2022
 worstcompany <- df22 %>%
   mutate(company = fct_reorder(company, rank)) %>%
@@ -281,8 +278,10 @@ worstcompany %>% ggplot(aes(x = company, y = rank, color = industry)) +
   )
 ```
 
-```{R}
-#***** Findings: The mode of the Rank for all companies in the yea 2022 is `Very Good`.
+In 2022, most companies achieved "Very Good" reputation standing or above.
+
+```{r}
+#***** Findings: The mode of the Rank for all companies in the year 2022 is `Very Good`.
 # meaning that most of companies in 2022 are rated as `Very Good`.
 changeInrank$rq_cat <- cut(changeInrank$rq,
   breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
@@ -295,36 +294,43 @@ changeInrank %>%
   distinct() %>%
   ggplot(aes(rq_cat)) +
     geom_bar(fill = "steelblue") +
+    labs(title = "RQ Category Distribution", x = "RQ Categories") +
+    theme(plot.title = element_text(hjust = 0.5)) +
     geom_text(
       position = "stack", stat = "count", aes(label = ..count..), vjust = -0.5
     )
 ```
 
+Now, the following figures show some of the major trends for many companies in different categories.
 
-# For the 2022
-```{R}
+```{r}
 # Changes in ranks over the years for each industry
 #***** Findings: most tech companies has low rank in 2020 while it raises in 2021
 # TODO: extract some intresting scocials or comapanies
 Tech %>%
-  filter(company == c("Facebook", "Twitter")) %>%
   ggplot(aes(year, rq, color = company)) +
   geom_path(alpha = 0.7) +
   geom_point(size = 3) +
-  labs(title = "The RQ scale for some tech companies", x = "Years") +
+  labs(title = "The RQ Score for Some Tech Companies", x = "Years") +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-```{R}
-#***** Findings: pharams companies has a low during 2020 during covid. However, in 2021 pfizer has a sharpe drop in rank
+Tech companies in general appears to have high RQ score, however this category is now having two new companies which are TikTok and Robinhood. Nonetheless, the year 2019 seems to be a critical year for most of the tech companies, specifically Facebook as its RQ score dropped by almost 20 units.
+
+```{r}
+#Findings: pharams companies has a low during 2020 during covid. However, in 2021 pfizer has a sharpe drop in rank
+
 ggplot(Pharma, aes(year, rq, color = company)) +
   geom_path() +
   geom_point(size = 3) +
   labs(title = "The RQ Score for Pharma Companies", x = "Years") +
   theme(plot.title = element_text(hjust = 0.5))
+
 ```
 
-```{R}
+For pharma industry, Johnson & Johnson dominated the scene but its RQ score kept detortiorating until 2020 when a new competitor came to the poll and Johnson & Johnson RQ scores started to settle down.
+
+```{r}
 #***** Findings: Automotive companies in general after the year of 2019 has dropped in RQ scale
 ggplot(Automotive, aes(year, rq, color = company)) +
   geom_path() +
@@ -332,7 +338,10 @@ ggplot(Automotive, aes(year, rq, color = company)) +
   labs(title = "The RQ Score for Automotive Comapnies", x = "Years") +
   theme(plot.title = element_text(hjust = 0.5))
 ```
-```{R}
+
+In automotive industry, most companies' RQ scores has dropped after 2018 but came again to rise after the year of 2019.
+
+```{r}
 #***** Findings: groceries companies has rocked up after 2020
 ggplot(Groceries, aes(year, rq, color = company)) +
   geom_path() +
@@ -341,15 +350,35 @@ ggplot(Groceries, aes(year, rq, color = company)) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
+The groceries industry has been in decline since 2017, however, the industry seems to gain RQ scores back in 2022.
+
+## Reputation EDA
+
+### Data munging
+
+The below summary of the reputation shows that the data is clean.
 
 ```{r}
+summary(reputation)
+```
+
+```{r}
+reputation %>%
+  distinct() %>%
+  na.omit() -> reputation
+```
+
+### Data visualization
+
+```{r}
+
 # stacked bar chart for score of tech companies in every name ** this cab be done for other industries
 #***** Findings: johnson&johnson has lower scores in every aspect compared to Pfizer
 phar <- reputation[reputation$industry == "Pharma", ]
 ggplot(phar, aes(x = company, y = score, fill = name, label = score)) +
   geom_bar(stat = "identity") +
   geom_text(size = 3, position = position_stack(vjust = 0.5)) +
-  labs(title = "The Pharma companies detailed scores for 2022") +
+  labs(title = "The Pharma Companies Detailed Scores for 2022") +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
@@ -367,6 +396,14 @@ ggplot(auto, aes(x = company, y = score, fill = name, label = cats)) +
 ```{r}
 #***** Findings: retails and tech have more companies with high score for culture
 # rank of companies in term of names, plot top 10 in term of ethics
+vision <- reputation[reputation$name == "VISION", ]
+trust <- reputation[reputation$name == "TRUST", ]
+citizenship <- reputation[reputation$name == "CITIZENSHIP", ]
+culture <- reputation[reputation$name == "CULTURE", ]
+ethics <- reputation[reputation$name == "ETHICS", ]
+growth <- reputation[reputation$name == "GROWTH", ]
+ps <- reputation[reputation$name == "P&S", ]
+
 topculture <- culture %>%
   filter(rank < 11) %>%
   mutate(company = fct_reorder(company, desc(rank)))
@@ -392,3 +429,30 @@ topculture %>% ggplot(aes(x = company, y = rank, color = industry)) +
     axis.ticks.y = element_blank()
   )
 ```
+
+# Hypothesis Testing
+
+```{r}
+# Hypothesis
+### Fitting Linear Model
+lm.fit <- lm(poll$rank ~ poll$rq, data = poll)
+
+summary(lm.fit)
+
+### to get the confidence interval lower and upper bound
+confint(lm.fit)
+
+#***** Findings: the p value of rq is lower than 0.05. Thus, we can reject the null hypothesis
+#< 2.2e-16 as the p value would indicate a significant result,
+# meaning that the actual p value is even smaller than 2.2e-16
+# (a typical threshold is 0.05, anything smaller counts as statistically significant)
+# *****Findings:Multiple R-squared of  0.8497 means the it can explain 84% of variation in rank
+```
+
+```{r}
+### abline is to draw the estimated line
+plot(poll$rank ~ poll$rq)
+abline(lm.fit, lwd = 3, col = "red")
+```
+
+# Conclusion
