@@ -68,7 +68,7 @@ poll %>%
 #  50-54: Very Poor
 #  Below 50: Critical
 
-poll$`2022_rq_cat` <- cut(poll$`2022_rq`,
+poll$`rq_cat` <- cut(poll$rq,
   breaks = c(0, 50, 55, 65, 70, 75, 80, Inf),
   labels = c("Critical", "Bad", "Poor", "Fair", "Good", "Great", "Excellent"),
   right = FALSE)
