@@ -67,7 +67,6 @@ Food_Beverage <- changeInrank %>%
 Consumer_Goods <- changeInrank %>%
   filter(industry == 'Consumer Goods')
 
-
 Pharma <- changeInrank %>%
   filter(industry == 'Pharma')
 
@@ -79,61 +78,25 @@ Tech <- changeInrank %>%
 
 
 #Changes in ranks over the years for each industry
+#*****Findings: most tech companies has low rank in 2020 while it raises in 2021
 ggplot(Tech, aes(year, rank, color = company)) +
   geom_bump()+
   geom_point(size = 3)
 
-
-ggplot(Energy, aes(year, rank, color = company)) +
+#*****Findings: pharams companies has a high during 2020 during covid. However, in 2021 pfizer has a sharpe drop in rank
+ggplot(Pharma, aes(year, rank, color = company)) +
   geom_bump()+
   geom_point(size = 3)
 
-
-ggplot(Pharma, aes(year, rank, color = company)) +
-  geom_bump()
-
+#*****Findings: Automotive companies in general after the year of 2019 has drop in rank
 ggplot(Automotive, aes(year, rank, color = company)) +
    geom_bump()+
   geom_point(size = 3)
 
+#*****Findings: groceries companies has rocked up after 2020
 ggplot(Groceries, aes(year, rank, color = company)) +
   geom_bump()+
   geom_point(size = 3)
-
-ggplot(Groceries, aes(year, rank, color = company)) +
-  geom_bump()+
-  geom_point(size = 3)
-
-ggplot(Financial_Services, aes(year, rank, color = company)) +
-  geom_bump()+
-  geom_point(size = 3)
-
-ggplot(Food_Beverage, aes(year, rank, color = company)) +
-  geom_bump()+
-  geom_point(size = 3)
-
-#change in rq
-ggplot(Food_Beverage, aes(year, rq, color = company)) +
-  geom_bump()+
-  geom_point(size = 3)
-
-
-#2ed way to plot
-
-ggplot(Consumer_Goods, aes(year, rank, color = company)) +
-  geom_point(size = 7) +
-  geom_text(data = Consumer_Goods %>% filter(year == min(year)),
-            aes(x = year - .1, label = company), size = 5, hjust = 1) +
-  geom_text(data = Consumer_Goods %>% filter(year == max(year)),
-            aes(x = year + .1, label = company), size = 5, hjust = 0) +
-  geom_bump(size = 2, smooth = 8) +
-  theme_minimal_grid(font_size = 14, line_size = 0) +
-  theme(legend.position = "none",
-        panel.grid.major = element_blank()) +
-  labs(y = "RANK",
-       x = NULL) +
-  scale_y_reverse() +
-  scale_color_manual(values = wes_palette(n = 4, name = "GrandBudapest1"))
 
 
 # Remove duplicates from 2022 records
@@ -141,15 +104,10 @@ Clean_df22<- df22 %>% distinct(company, .keep_all = TRUE)
 company_rank<-Clean_df22%>%
   filter(rank < 11) %>%
   mutate(company = fct_reorder(company, desc(rank)))
-  
-#plot top 10 of 2022
-ggplot(company_rank, aes(x=company, y=rank,fill=industry)) + 
-  geom_bar(stat = "identity", alpha=.6, width=.4) +
-  coord_flip()
 
 
 library(ggplot2)
-
+#*****Findings: the top 3 companies all belongs to the retail industry
 # Plot top 10 of 2022 using Lollipop Chart along with industry
 company_rank%>%ggplot( aes(x=company, y=rank,color=industry)) + 
   geom_point(size=3) + 
@@ -168,30 +126,13 @@ company_rank%>%ggplot( aes(x=company, y=rank,color=industry)) +
     axis.ticks.y = element_blank()
   )
 
-######### change during covid in rank for tech companies
-
-Change_cov19<-poll%>%
-  filter(year < 2022 &year>2018)%>% drop_na(rank)
-
-
-tech <- Change_cov19 %>%
-  filter(industry == 'Tech')
-
-ggplot(tech, aes(year, rank, color = company)) +
-  geom_bump()+
-  geom_point(size = 3)
-
-#top/worst companies of each industry
-
-
-library(dplyr)
+#best companies of each industry in 2022
 bestcompany<-df22 %>%
   mutate(company = fct_reorder(company, desc(rank)))%>%
   group_by(industry) %>%
   slice(which.min(rank))
-  
 
-
+#*****Findings:best tech company is Samsung,  for eCommerce Amazon, for cars Toyota, for media we have Spotify
 bestcompany%>%ggplot( aes(x=company, y=rank,color=industry)) + 
   geom_point(size=3) + 
   geom_text(aes(label = rank), color ="black", size = 3)+
@@ -199,7 +140,32 @@ bestcompany%>%ggplot( aes(x=company, y=rank,color=industry)) +
                    xend=company, 
                    y=0, 
                    yend=rank)) + 
-  labs(title="The Highest Ranked Companies", 
+  labs(title="The Highest Ranked Companies For Each Industry", 
+       subtitle="Rank") +
+  theme_light() +
+  coord_flip() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+
+
+#worst companies of each industry in 2022
+worstcompany<-df22 %>%
+  mutate(company = fct_reorder(company, rank))%>%
+  group_by(industry) %>%
+  slice(which.max(rank))
+
+#*****Findings:worst tech company is Twitter,  for eCommerce Wish, for cars General motors, for media we have Fox corporation
+worstcompany%>%ggplot( aes(x=company, y=rank,color=industry)) + 
+  geom_point(size=3) + 
+  geom_text(aes(label = rank), color ="black", size = 3)+
+  geom_segment(aes(x=company, 
+                   xend=company, 
+                   y=0, 
+                   yend=rank)) + 
+  labs(title="The Lowest Ranked Companies For Each Industry", 
        subtitle="Rank") +
   theme_light() +
   coord_flip() +
@@ -226,8 +192,9 @@ changeInrank$rq[changeInrank$rq <= 65 & changeInrank$rq > 55] <- "Poor"
 changeInrank$rq[changeInrank$rq <= 55 & changeInrank$rq > 50] <- "Very Poor" 
 changeInrank$rq[changeInrank$rq <= 50] <- "Critical" 
 
+#*****Findings: most companies has a very good score, non got critical points, while 5 companies got very poor results
 ggplot(changeInrank, aes(factor(rq))) +
-  geom_bar() 
+  geom_bar(fill="steelblue")
 
 ############################Reputation##############################
 vision <- reputation[reputation$name == 'VISION',]
@@ -237,7 +204,6 @@ culture <-  reputation[reputation$name == 'CULTURE',]
 ethics <-  reputation[reputation$name == 'ETHICS',]
 growth <-  reputation[reputation$name == 'GROWTH',]
 ps <-  reputation[reputation$name == 'P&S',]
-
 
 reputation$cats = "Excellent"
 reputation$cats[reputation$score < 80 & reputation$score > 75] <- "Very Good" 
