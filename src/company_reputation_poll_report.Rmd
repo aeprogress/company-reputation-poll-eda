@@ -402,7 +402,8 @@ plot(poll$rank ~ poll$rq)
 abline(lm.fit, lwd = 3, col = "red")
 
 ```
+
 the slope of the regression line is not equal to zero. Thus, we reject the null hypothesis of H0: β1 = 0 
 
 # Conclusion
-In conclusion, the analysis on the dataset showed that most industries did not undergo a significant changes over the course of the past five years, only the tech, pharma, automotive, and groceries exhibited a notably significant  changes. Also, in 2022, the majority of companies achieved a "Very Good" reputation standing or better, which shows the improvement in reputations in general. It appeared that the top two companies have maintained their rankings since 2017, nonetheless, their respective RQ scores were changing but not significantly. Tech industry has the highest number of new companies as the welcomed two new companies in 2018 and another two in 2021. In the end, the hypothesis testing rejected the null hypothesis and showed that the RQ score is important to predict the ranking of the company with slope of -4.17576 and R-squared value of 0.84.
+In conclusion, the analysis on the dataset showed that most industries did not undergo a significant changes over the course of the past five years, only the tech, pharma, automotive, and groceries industries exhibited a notably significant changes. Also, in 2022, the majority of companies achieved a "Very Good" reputation standing or better, which shows the improvement in reputations in general. It appeared that the top two companies have maintained their rankings since 2017, nonetheless, their respective RQ scores were changing but not significantly. Tech industry has the highest number of new companies as the welcomed two new companies in 2019 and another two in 2021. In the end, the hypothesis testing rejected the null hypothesis and showed that the RQ score is important to predict the ranking of the company with slope of -4.17576 and R-squared value of 0.84.
