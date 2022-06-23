@@ -142,26 +142,26 @@ poll <- rbind(poll, poll22)
 The figure below shows the top ten companies in 2022, with their respective industries. It is evident that the top three companies are from the same, Retail, industry, in fact, the top two companies remained in their respective rank since 2017.
 
 ```{r, echo = FALSE, message=FALSE}
+poll_for_top_ten <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/poll.csv")
 
 # Remove duplicates from 2022 records
-company_rank <- poll %>%
-  filter(year == 2022, rank < 11) %>%
+company_rank <- poll_for_top_ten %>%
+  filter(`2022_rank` < 11) %>%
   distinct(company, .keep_all = TRUE) %>% 
-  mutate(company = fct_reorder(company, desc(rank)))
+  mutate(company = fct_reorder(company, desc(`2022_rank`)))
 
 #***** Findings: The top 3 companies all belongs to the retail industry
 # Plot top 10 of 2022 using Lollipop Chart along with industry
-  ggplot(company_rank, aes(x = company, y = rank, color = industry)) +
+  ggplot(company_rank, aes(x = company, y = `2022_rank`, color = industry)) +
   geom_point(size = 3) +
-  geom_text(aes(label = rank), color = "white", size = 3) +
-  geom_segment(aes(x = company, xend = company, y = 0, yend = rank)) +
+  geom_text(aes(label = `2022_rank`), color = "white", size = 3) +
+  geom_segment(aes(x = company, xend = company, y = 0, yend = `2022_rank`)) +
   labs(title = "The Highest Ranked Companies", subtitle = "Rank") +
   theme_light() +
   coord_flip() +
   theme(panel.grid.major.y = element_blank(),
         panel.border = element_blank(),
         axis.ticks.y = element_blank())
-  
 ```
 
 It is apparent that retail companies have the best RQ scores, as illustrated in the following figure; preserving the top two since 2017. Meanwhile, food delivery appears to have lowest RQ scores, with best company in that category, DoorDash, having the 68^th^ rank.
